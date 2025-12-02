@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    environment {
+        AWS_REGION = 'ap-south-1'
+        // ECR_REPO = '123456789012.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc'
+        IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.substring(0,7)}"
+    }
+    stages {
+        stage('Checkout') { 
+            steps { 
+                checkout scm 
+                } 
+            }
+        stage('Install & Test') {
+            steps {
+                dir('node-app') {
+                sh 'npm ci'
+                sh 'npm test || true'
+            }
+        }
+    }
+        stage('SonarQube') {
+            steps {
+                echo 'Run SonarQube analysis (placeholder)'
+            }
+        }
+        stage('Build Image') {
+            steps {
+                sh 'cd node-app && docker build -t $ECR_REPO:$IMAGE_TAG .'
+            }
+        }
+        stage('Scan Image') {
+            steps {
+                sh "trivy image --exit-code 1 --severity HIGH,CRITICAL $ECR_REPO:$IMAGE_TAG || true"
+            }
+        }
+        stage('Push to ECR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-ecr-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 123456789012.dkr.ecr.$AWS_REGION.amazonaws.com
+                        docker push $ECR_REPO:$IMAGE_TAG
+                    '''
+                }
+            }
+        }
+        stage('Update GitOps Repo') {
+            steps {
+                echo 'Update Git repo with new image tag (placeholder)'
+                }
+        }
+    }
+}
