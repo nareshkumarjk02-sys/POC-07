@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         AWS_REGION = 'ap-south-1'
-        ECR_REPO = '123456789012.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc'
+        ECR_REPO = '442027455290.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc'
         IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.substring(0,7)}"
     }
     stages {
@@ -36,9 +36,9 @@ pipeline {
         }
         stage('Push to ECR') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-ecr-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([usernamePassword(credentialsId: 'aws-ecr-cred', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh '''
-                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 123456789012.dkr.ecr.$AWS_REGION.amazonaws.com
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 442027455290.dkr.ecr.$AWS_REGION.amazonaws.com
                         docker push $ECR_REPO:$IMAGE_TAG
                     '''
                 }
