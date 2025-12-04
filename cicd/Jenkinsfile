@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         AWS_REGION = 'ap-south-1'
-        // ECR_REPO = '123456789012.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc'
+        ECR_REPO = '123456789012.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc'
         IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.substring(0,7)}"
     }
     stages {
