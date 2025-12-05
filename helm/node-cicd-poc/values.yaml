@@ -1,7 +1,7 @@
 replicaCount: 2
 image:
   repository: 442027455290.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc
-  tag: "20-2a24f88"
+  tag: "21-a111807"
   pullPolicy: Always
 replicaCount: 2
 service:
