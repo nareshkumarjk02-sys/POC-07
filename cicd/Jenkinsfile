@@ -55,8 +55,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'github-token',
-                    usernameVariable: 'GIT_USERNAME',
-                    passwordVariable: 'GIT_PASSWORD'
+                    variable: 'GIT_TOKEN'
                 )]) {
                     sh """
                         # Update image tag
