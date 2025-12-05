@@ -1,0 +1,11 @@
+replicaCount: 2
+image:
+  repository: 442027455290.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc
+  tag: latest
+  pullPolicy: Always
+replicaCount: 2
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
