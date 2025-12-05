@@ -53,10 +53,10 @@ pipeline {
         }
         stage('Update Helm Values') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'github-token',
-                    variable: 'GIT_TOKEN'
-                )]) {
+                withCredentials([string(
+                        credentialsId: 'github-token',
+                        variable: 'GIT_TOKEN' // Binds the Secret Text content to this variable
+                    )]){
                     sh """
                         # Update image tag
                         sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' helm/node-cicd-poc/values.yaml
@@ -70,7 +70,7 @@ pipeline {
                         git commit -m "Update image tag to ${IMAGE_TAG} [skip ci]" || exit 0
                         
                         # Push using token authentication
-                        git push https://${GIT_USERNAME}:${GIT_PASSWORD}@${GIT_REPO} HEAD:${GIT_BRANCH}
+                        git push https://nareshkumarjk02-sys:${GIT_TOKEN}@github.com/nareshkumarjk02-sys/POC-04.git HEAD:${GIT_BRANCH}
                     """
                 }
             }
