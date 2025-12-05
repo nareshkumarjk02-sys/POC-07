@@ -1,7 +1,7 @@
 replicaCount: 2
 image:
   repository: 442027455290.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc
-  tag: latest
+  tag: "19-91a85a6"
   pullPolicy: Always
 replicaCount: 2
 service:
