@@ -1,3 +1,16 @@
 image:
-  repository: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc
-  tag: latest
+  repository: 442027455290.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc
+  pullPolicy: Always
+  tag: "1"  # This will be updated by Jenkins
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

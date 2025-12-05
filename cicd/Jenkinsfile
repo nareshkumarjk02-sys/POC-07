@@ -3,6 +3,7 @@ pipeline {
     environment {
         AWS_REGION = 'ap-south-1'
         ECR_REPO = '442027455290.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc'
+        GIT_BRANCH = 'main'
         IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.substring(0,7)}"
     }
     stages {
@@ -48,6 +49,44 @@ pipeline {
             steps {
                 echo 'Update Git repo with new image tag (placeholder)'
                 }
+        }
+        stage('Update Helm Values') {
+            steps {
+                script {
+                    sh """
+                        sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' helm/node-cicd-poc/values.yaml
+                        
+                        git config user.name "nareshkumarjk02-sys"
+                        git config user.email "nareshkumarjk02@gmail.com"
+                        
+                        git add helm/node-cicd-poc/values.yaml
+                        git commit -m "Update image tag to ${IMAGE_TAG}" || true
+                        git push origin ${GIT_BRANCH}
+                    """
+                }
+            }
+        }
+        
+        stage('Trigger ArgoCD Sync') {
+            steps {
+                script {
+                    sh """
+                        kubectl annotate application node-cicd-poc -n argocd \
+                        argocd.argoproj.io/refresh=hard --overwrite
+                    """
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo "✅ Pipeline completed successfully! Image: ${ECR_REPO}:${IMAGE_TAG}"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+        }
+        always {
+            sh 'docker system prune -f'
         }
     }
 }
