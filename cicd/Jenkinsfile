@@ -9,17 +9,23 @@ pipeline {
     stages {
         stage('Checkout') { 
             steps { 
-                checkout scm 
-                } 
-            }
+                checkout scm
+                script {
+                    sh """
+                        git checkout ${GIT_BRANCH} || git checkout -b ${GIT_BRANCH}
+                        git pull origin ${GIT_BRANCH} || true
+                    """
+                }
+            } 
+        }
         stage('Install & Test') {
             steps {
                 dir('node-app') {
-                sh 'npm ci'
-                sh 'npm test || true'
+                    sh 'npm ci'
+                    sh 'npm test || true'
+                }
             }
         }
-    }
         stage('SonarQube') {
             steps {
                 echo 'Run SonarQube analysis (placeholder)'
@@ -45,24 +51,34 @@ pipeline {
                 }
             }
         }
-        stage('Update GitOps Repo') {
-            steps {
-                echo 'Update Git repo with new image tag (placeholder)'
-                }
-        }
         stage('Update Helm Values') {
             steps {
-                script {
-                    sh """
-                        sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' helm/node-cicd-poc/values.yaml
-                        
-                        git config user.name "nareshkumarjk02-sys"
-                        git config user.email "nareshkumarjk02@gmail.com"
-                        
-                        git add helm/node-cicd-poc/values.yaml
-                        git commit -m "Update image tag to ${IMAGE_TAG}" || true
-                        git push origin ${GIT_BRANCH}
-                    """
+                sshagent(['github-ssh-key']) {
+                    script {
+                        sh """
+                            # Update image tag in values.yaml
+                            sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' helm/node-cicd-poc/values.yaml
+                            
+                            # Configure git
+                            git config user.name "nareshkumarjk02-sys"
+                            git config user.email "nareshkumarjk02@gmail.com"
+                            
+                            # Check if there are changes
+                            if git diff --quiet helm/node-cicd-poc/values.yaml; then
+                                echo "No changes to commit"
+                            else
+                                # Add and commit changes
+                                git add helm/node-cicd-poc/values.yaml
+                                git commit -m "Update image tag to ${IMAGE_TAG} [skip ci]"
+                                
+                                # Convert remote to SSH if needed
+                                git remote set-url origin git@github.com:nareshkumarjk02-sys/POC-07.git
+                                
+                                # Push using SSH
+                                git push origin HEAD:${GIT_BRANCH}
+                            fi
+                        """
+                    }
                 }
             }
         }
