@@ -5,7 +5,14 @@ image:
   pullPolicy: Always
 replicaCount: 2
 service:
-  type: ClusterIP
+  type: LoadBalancer
   port: 80
+  targetPort: 3000
 
-resources: {}
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
