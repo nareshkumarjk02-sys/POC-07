@@ -4,6 +4,7 @@ pipeline {
         AWS_REGION = 'ap-south-1'
         ECR_REPO = '442027455290.dkr.ecr.ap-south-1.amazonaws.com/node-cicd-poc'
         GIT_BRANCH = 'main'
+        GIT_REPO = 'github.com/nareshkumarjk02-sys/POC-07.git'
         IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.substring(0,7)}"
     }
     stages {
@@ -13,7 +14,6 @@ pipeline {
                 script {
                     sh """
                         git checkout ${GIT_BRANCH} || git checkout -b ${GIT_BRANCH}
-                        git pull origin ${GIT_BRANCH} || true
                     """
                 }
             } 
@@ -53,32 +53,26 @@ pipeline {
         }
         stage('Update Helm Values') {
             steps {
-                sshagent(['github-ssh-key']) {
-                    script {
-                        sh """
-                            # Update image tag in values.yaml
-                            sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' helm/node-cicd-poc/values.yaml
-                            
-                            # Configure git
-                            git config user.name "nareshkumarjk02-sys"
-                            git config user.email "nareshkumarjk02@gmail.com"
-                            
-                            # Check if there are changes
-                            if git diff --quiet helm/node-cicd-poc/values.yaml; then
-                                echo "No changes to commit"
-                            else
-                                # Add and commit changes
-                                git add helm/node-cicd-poc/values.yaml
-                                git commit -m "Update image tag to ${IMAGE_TAG} [skip ci]"
-                                
-                                # Convert remote to SSH if needed
-                                git remote set-url origin git@github.com:nareshkumarjk02-sys/POC-07.git
-                                
-                                # Push using SSH
-                                git push origin HEAD:${GIT_BRANCH}
-                            fi
-                        """
-                    }
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-credentials',
+                    usernameVariable: 'GIT_USERNAME',
+                    passwordVariable: 'GIT_PASSWORD'
+                )]) {
+                    sh """
+                        # Update image tag
+                        sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' helm/node-cicd-poc/values.yaml
+                        
+                        # Git config
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@ci.local"
+                        
+                        # Commit changes
+                        git add helm/node-cicd-poc/values.yaml
+                        git commit -m "Update image tag to ${IMAGE_TAG} [skip ci]" || exit 0
+                        
+                        # Push using token authentication
+                        git push https://${GIT_USERNAME}:${GIT_PASSWORD}@${GIT_REPO} HEAD:${GIT_BRANCH}
+                    """
                 }
             }
         }
@@ -96,13 +90,15 @@ pipeline {
     }
     post {
         success {
-            echo "✅ Pipeline completed successfully! Image: ${ECR_REPO}:${IMAGE_TAG}"
+            echo "✅ Pipeline completed successfully!"
+            echo "Image: ${ECR_REPO}:${IMAGE_TAG}"
+            echo "Pushed to Git and triggered ArgoCD sync"
         }
         failure {
             echo "❌ Pipeline failed!"
         }
         always {
-            sh 'docker system prune -f'
+            sh 'docker system prune -f || true'
         }
     }
 }
