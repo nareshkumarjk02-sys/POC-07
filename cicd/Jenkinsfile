@@ -63,8 +63,8 @@ pipeline {
                         sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' helm/node-cicd-poc/values.yaml
                         
                         # Git config
-                        git config user.name "Jenkins CI"
-                        git config user.email "jenkins@ci.local"
+                        git config user.name "nareshkumarjk02-sys"
+                        git config user.email "nareshkumarjk02@gmail.com"
                         
                         # Commit changes
                         git add helm/node-cicd-poc/values.yaml
