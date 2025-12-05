@@ -72,11 +72,9 @@ pipeline {
         }
         stage('Configure EKS Access') {
             steps {
-                sh '''
-                    aws eks update-kubeconfig \
-                    --region ap-south-1 \
-                    --name node-cicd-poc-eks
-                '''
+                withAWS(credentials: '	aws-ecr-cred', region: 'ap-south-1') {
+                    sh 'aws eks update-kubeconfig --region ap-south-1 --name node-cicd-poc-eks'
+                    }
             }
         }
         stage('Trigger ArgoCD Sync') {
