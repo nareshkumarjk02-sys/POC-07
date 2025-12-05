@@ -70,14 +70,22 @@ pipeline {
                 }
             }
         }
-        
+        stage('Configure EKS Access') {
+            steps {
+                sh '''
+                    aws eks update-kubeconfig \
+                    --region ap-south-1 \
+                    --name node-cicd-poc-eks
+                '''
+            }
+        }
         stage('Trigger ArgoCD Sync') {
             steps {
                 script {
-                    sh """
+                    sh '''
                         kubectl annotate application node-cicd-poc -n argocd \
                         argocd.argoproj.io/refresh=hard --overwrite
-                    """
+                    '''
                 }
             }
         }
